@@ -163,6 +163,15 @@ C:\Users\你的用户名\.mi.token
 
 这个文件可供 xiaogpt 使用。
 
+如果出现：
+
+```text
+CERTIFICATE_VERIFY_FAILED
+self-signed certificate in certificate chain
+```
+
+说明浏览器与 Python 使用了不同证书库，或本机代理/杀毒软件检查 HTTPS。最新版脚本已通过 `truststore` 让 Python 使用 Windows 信任证书库；重新下载脚本再运行即可。不要通过关闭 SSL 校验来绕过。
+
 ---
 
 ## 6. 备选：抓「小爱对话」Cookie（不是商城 Cookie）

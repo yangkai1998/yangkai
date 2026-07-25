@@ -25,8 +25,8 @@ if (-not (Test-Path $venvPython)) {
     }
 }
 
-Write-Host "Installing latest MiService with OTP support..." -ForegroundColor Yellow
-& $venvPython -m pip install -U miservice aiohttp
+Write-Host "Installing latest MiService with OTP and Windows certificate support..." -ForegroundColor Yellow
+& $venvPython -m pip install -U miservice aiohttp truststore
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Failed to install the latest MiService." -ForegroundColor Red
     exit $LASTEXITCODE
@@ -75,7 +75,9 @@ try {
     Write-Host "如果手机收到验证码，终端会显示 Input Phone Code；输入短信验证码并回车。" -ForegroundColor Cyan
     Write-Host ""
 
-    & $venvPython -m miservice list
+    # truststore makes Python use the same Windows certificate store as the browser.
+    # This safely supports antivirus/proxy certificates without disabling TLS checks.
+    & $venvPython -c "import truststore; truststore.inject_into_ssl(); from miservice.__main__ import main; main()" list
     $result = $LASTEXITCODE
 
     Write-Host ""
