@@ -40,10 +40,10 @@ hardware: LX06          # 你的型号
 account: "..."
 password: "..."
 mi_did: "..."
-openai_key: "sk-..."
+openai_key: "sk-..."    # 只写进 xiao_config.yaml，不要写进 example
 api_base: "https://api.deepseek.com/v1"
 gpt_options:
-  model: "deepseek-chat"
+  model: "deepseek-v4-flash"
 keyword:
   - "问助手"
   - "问杨凯"
