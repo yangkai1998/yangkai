@@ -232,6 +232,7 @@ pwsh -ExecutionPolicy Bypass `
 - `verbose: false`，避免调试日志打印 API Key
 - 使用已实测能返回 LX06 问题的 conversation 接口
 - 为 DeepSeek V4 Flash 显式关闭思考模式，避免语音短答只返回推理内容而最终文本为空
+- 当 PowerShell 能解析小米域名、但 Python `getaddrinfo` 失败时，使用 Windows DNS 结果连接；TLS 仍按原域名校验
 
 ---
 

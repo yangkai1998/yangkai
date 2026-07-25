@@ -101,7 +101,50 @@ end_conversation: "结束持续对话"
 $runner = @'
 import asyncio
 import inspect
+import ipaddress
+import socket
+import subprocess
 import sys
+
+
+XIAOMI_PROFILE_HOST = "userprofile.mina.mi.com"
+
+
+def resolve_with_powershell(host):
+    """Use Windows DNS when Python/asyncio getaddrinfo is broken."""
+    command = (
+        f"(Resolve-DnsName -Type A '{host}' -ErrorAction Stop | "
+        "Where-Object { $_.IPAddress } | "
+        "Select-Object -First 1 -ExpandProperty IPAddress)"
+    )
+    value = subprocess.check_output(
+        ["powershell.exe", "-NoProfile", "-Command", command],
+        text=True,
+        timeout=15,
+    ).strip()
+    return str(ipaddress.ip_address(value))
+
+
+try:
+    _xiaomi_profile_ip = resolve_with_powershell(XIAOMI_PROFILE_HOST)
+except Exception as exc:
+    raise RuntimeError(
+        f"Windows 无法解析 {XIAOMI_PROFILE_HOST}：{exc}"
+    ) from exc
+
+_original_getaddrinfo = socket.getaddrinfo
+
+
+def getaddrinfo_with_windows_fallback(host, port, *args, **kwargs):
+    normalized = host.decode() if isinstance(host, bytes) else str(host)
+    if normalized.lower() == XIAOMI_PROFILE_HOST:
+        # Only replace DNS resolution. aiohttp still validates TLS against the
+        # original URL hostname, so certificate verification remains enabled.
+        return _original_getaddrinfo(_xiaomi_profile_ip, port, *args, **kwargs)
+    return _original_getaddrinfo(host, port, *args, **kwargs)
+
+
+socket.getaddrinfo = getaddrinfo_with_windows_fallback
 
 from miservice import MiAccount, MiIOService, MiNAService
 from xiaogpt.config import Config
