@@ -1,19 +1,19 @@
 # 居家推荐路径：基于开源 xiaogpt 的本地桥接
-# 复制为 xiao_config.yaml 后填写，再按 docs/02-home-path.md 启动
+# 复制为 xiao_config.yaml 后填写，再按 docs/02-home-path-windows.md 启动
 #
-# 重要：真正的 API Key / 密码只写进 xiao_config.yaml（已被 gitignore）
+# 重要：真正的 API Key / 密码 / Cookie 只写进 xiao_config.yaml（已被 gitignore）
 # 不要写进本 example 文件，也不要提交到 GitHub
 
 # 音箱型号（看音箱底部贴纸，或 micli mina）
 hardware: LX06
 
-# 小米账号（建议优先 cookie；账号密码可能触发风控）
-account: "你的小米ID或手机号"
+# 小米账号：优先用「小米 ID」数字，不要只用手机号
+account: "你的小米ID数字"
 password: "你的密码"
-# cookie: "从浏览器抓到的服务 cookie，可选"
+# cookie: "从 mina 相关接口抓到的 Cookie（可选，风控时用）"
 mi_did: "音箱DID"
 
-# DeepSeek（已验证可用）
+# DeepSeek
 bot: chatgptapi
 openai_key: "sk-在这里粘贴你的完整密钥"
 api_base: "https://api.deepseek.com/v1"
