@@ -1,3 +1,7 @@
+param(
+    [switch]$SkipInstall
+)
+
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
@@ -20,17 +24,21 @@ if ([int]$minor -gt 12) {
     exit 1
 }
 
-Write-Host "[2/4] Installing required packages (this may take several minutes)..." -ForegroundColor Yellow
-& python -m pip install -U miservice_fork
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to install miservice_fork." -ForegroundColor Red
-    exit $LASTEXITCODE
-}
+if ($SkipInstall) {
+    Write-Host "[2/4] Skipping package installation (already installed)." -ForegroundColor Green
+} else {
+    Write-Host "[2/4] Installing required packages (this may take several minutes)..." -ForegroundColor Yellow
+    & python -m pip install -U miservice_fork
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to install miservice_fork." -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
 
-& python -m pip install -U --force-reinstall "xiaogpt[locked]"
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to install xiaogpt." -ForegroundColor Red
-    exit $LASTEXITCODE
+    & python -m pip install -U --force-reinstall "xiaogpt[locked]"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to install xiaogpt." -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
 }
 
 $scriptsDir = & python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
@@ -51,12 +59,32 @@ Write-Host "micli:   $micli" -ForegroundColor DarkGray
 Write-Host "xiaogpt: $xiaogpt" -ForegroundColor DarkGray
 Write-Host ""
 
-$miUser = Read-Host "Enter your numeric Xiaomi ID (not phone number)"
-$securePassword = Read-Host "Enter your Xiaomi password" -AsSecureString
-$passwordPtr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+$miUser = ""
+while ([string]::IsNullOrWhiteSpace($miUser)) {
+    Write-Host ""
+    Write-Host "现在请输入小米 ID 数字（不是手机号），然后按回车：" -ForegroundColor Cyan
+    $miUser = Read-Host
+    if ([string]::IsNullOrWhiteSpace($miUser)) {
+        Write-Host "小米 ID 不能为空，请重新输入。" -ForegroundColor Red
+    }
+}
+
+$miPassword = ""
+$passwordPtr = [IntPtr]::Zero
+while ([string]::IsNullOrEmpty($miPassword)) {
+    Write-Host ""
+    Write-Host "现在请输入小米账号密码，然后按回车（输入时屏幕不会显示字符，这是正常的）：" -ForegroundColor Cyan
+    $securePassword = Read-Host -AsSecureString
+    $passwordPtr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+    $miPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPtr)
+    if ([string]::IsNullOrEmpty($miPassword)) {
+        Write-Host "密码不能为空，请重新输入。" -ForegroundColor Red
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPtr)
+        $passwordPtr = [IntPtr]::Zero
+    }
+}
 
 try {
-    $miPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPtr)
     $env:MI_USER = $miUser
     $env:MI_PASS = $miPassword
 

@@ -61,6 +61,15 @@ powershell -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\setup.ps1"
 > 输入账号时请用「小米 ID 数字」，不要用手机号。  
 > 脚本第一遍 `micli play` 可能报错；继续看随后 `micli list` 的结果。
 
+如果软件已安装、只需重新输入账号密码并获取 DID，请先重新下载最新版脚本，再跳过安装：
+
+```powershell
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-xiaoai-setup.ps1" `
+  -OutFile "$HOME\xiaoai-setup\setup.ps1"
+pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\setup.ps1" -SkipInstall
+```
+
 ### 方式 B：Microsoft Store
 
 1. 打开 Microsoft Store
