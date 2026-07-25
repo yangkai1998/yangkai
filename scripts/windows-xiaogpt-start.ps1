@@ -31,6 +31,22 @@ if ([string]::IsNullOrWhiteSpace($Did)) {
     }
 }
 
+$scriptsDir = & python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+$xiaogpt = Join-Path $scriptsDir "xiaogpt.exe"
+$tokenPath = Join-Path $HOME ".mi.token"
+$setupDir = Join-Path $HOME "xiaoai-setup"
+$configPath = Join-Path $setupDir "xiao_config.yaml"
+$runnerPath = Join-Path $setupDir "run_xiaogpt_cached.py"
+
+if (-not (Test-Path $xiaogpt)) {
+    Write-Host "找不到 xiaogpt.exe，请先运行 windows-xiaoai-setup.ps1。" -ForegroundColor Red
+    exit 1
+}
+if (-not (Test-Path $tokenPath)) {
+    Write-Host "找不到 $tokenPath，请先完成小米登录。" -ForegroundColor Red
+    exit 1
+}
+
 $apiKey = ""
 $keyPtr = [IntPtr]::Zero
 while ([string]::IsNullOrWhiteSpace($apiKey)) {
@@ -44,21 +60,6 @@ while ([string]::IsNullOrWhiteSpace($apiKey)) {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($keyPtr)
         $keyPtr = [IntPtr]::Zero
     }
-}
-
-$scriptsDir = & python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-$xiaogpt = Join-Path $scriptsDir "xiaogpt.exe"
-$tokenPath = Join-Path $HOME ".mi.token"
-$setupDir = Join-Path $HOME "xiaoai-setup"
-$configPath = Join-Path $setupDir "xiao_config.yaml"
-
-if (-not (Test-Path $xiaogpt)) {
-    Write-Host "找不到 xiaogpt.exe，请先运行 windows-xiaoai-setup.ps1。" -ForegroundColor Red
-    exit 1
-}
-if (-not (Test-Path $tokenPath)) {
-    Write-Host "找不到 $tokenPath，请先完成小米登录。" -ForegroundColor Red
-    exit 1
 }
 
 New-Item -ItemType Directory -Force $setupDir | Out-Null
@@ -94,8 +95,56 @@ start_conversation: "开始持续对话"
 end_conversation: "结束持续对话"
 "@
 
+$runner = @'
+import asyncio
+import inspect
+import sys
+
+from miservice import MiAccount, MiIOService, MiNAService
+from xiaogpt.config import Config
+from xiaogpt.xiaogpt import MiGPT
+
+
+async def login_with_cached_token(self):
+    """Use the verified service token without the old forced-login refresh."""
+    account = MiAccount(
+        self.mi_session,
+        self.config.account,
+        self.config.password,
+        str(self.mi_token_home),
+    )
+    token = getattr(account, "token", None)
+    if token is None and getattr(account, "token_store", None):
+        token = account.token_store.load_token()
+        if inspect.isawaitable(token):
+            token = await token
+        account.token = token
+    if not token or "micoapi" not in token:
+        raise RuntimeError(
+            "认证缓存缺少 micoapi，请先运行现代登录脚本和音箱播报测试。"
+        )
+    self.mina_service = MiNAService(account)
+    self.miio_service = MiIOService(account)
+
+
+MiGPT.login_miboy = login_with_cached_token
+config = Config(**Config.read_from_file(sys.argv[1]))
+
+
+async def run():
+    miboy = MiGPT(config)
+    try:
+        await miboy.run_forever()
+    finally:
+        await miboy.close()
+
+
+asyncio.run(run())
+'@
+
 try {
     $config | Set-Content -Path $configPath -Encoding UTF8
+    $runner | Set-Content -Path $runnerPath -Encoding UTF8
     Write-Host ""
     Write-Host "配置已保存到：$configPath" -ForegroundColor Green
     Write-Host "此文件含 API Key，不要发送或上传。" -ForegroundColor Yellow
@@ -103,7 +152,7 @@ try {
     Write-Host "正在启动 xiaogpt。保持此窗口开启。" -ForegroundColor Cyan
     Write-Host "启动成功后请说：小爱同学，问助手，今天适合吃什么？" -ForegroundColor Cyan
     Write-Host ""
-    & $xiaogpt --config $configPath
+    & python $runnerPath $configPath
 } finally {
     if ($keyPtr -ne [IntPtr]::Zero) {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($keyPtr)
