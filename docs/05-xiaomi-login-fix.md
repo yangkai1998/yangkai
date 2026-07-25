@@ -131,7 +131,41 @@ pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\xiaomi-token.ps1"
 
 ---
 
-## 5. 备选：抓「小爱对话」Cookie（不是商城 Cookie）
+## 5. passToken 返回 70016：使用新版 MiService 验证码登录
+
+`miservice_fork 2.9.3` 使用旧登录流程。若浏览器 token 仍返回：
+
+```text
+code: 70016
+登录验证失败
+```
+
+改用当前 MiService 3.x 的 OTP 登录。脚本会创建独立 Python 环境，不影响 xiaogpt：
+
+```powershell
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-xiaomi-modern-login.ps1" `
+  -OutFile "$HOME\xiaoai-setup\modern-login.ps1"
+pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\modern-login.ps1"
+```
+
+按提示输入小米 ID 和密码。如果触发二次认证：
+
+1. 手机会收到短信验证码
+2. 终端显示 `Input Phone Code:`
+3. 输入验证码并回车
+
+成功后，新版 MiService 会把可复用服务令牌写到：
+
+```text
+C:\Users\你的用户名\.mi.token
+```
+
+这个文件可供 xiaogpt 使用。
+
+---
+
+## 6. 备选：抓「小爱对话」Cookie（不是商城 Cookie）
 
 关键：要从小爱相关域名抓，不要只从 `mi.com` 商城页抓。
 
@@ -159,7 +193,7 @@ cookie: "整段Cookie"
 
 ---
 
-## 6. 拿到 DID 后最小可运行配置
+## 7. 拿到 DID 后最小可运行配置
 
 ```yaml
 hardware: LX06
@@ -189,7 +223,7 @@ xiaogpt --config home\xiao_config.yaml --use_chatgpt_api --mute_xiaoai --stream
 
 ---
 
-## 7. 安全
+## 8. 安全
 
 如果 Key / Cookie 曾经写进 example 或发到聊天：
 
