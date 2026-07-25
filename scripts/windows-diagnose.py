@@ -6,7 +6,10 @@ This script never prints API keys, Xiaomi service tokens, cookies, or passwords.
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
+import socket
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -20,6 +23,43 @@ from openai import AsyncOpenAI
 HOME = Path.home()
 TOKEN_PATH = HOME / ".mi.token"
 CONFIG_PATH = HOME / "xiaoai-setup" / "xiao_config.yaml"
+
+_XIAOMI_HOSTS = ("userprofile.mina.mi.com", "api2.mina.mi.com")
+_original_getaddrinfo = socket.getaddrinfo
+_resolved_cache: dict[str, str] = {}
+
+
+def _resolve_with_powershell(host: str) -> str:
+    command = (
+        f"(Resolve-DnsName -Type A '{host}' -ErrorAction Stop | "
+        "Where-Object { $_.IPAddress } | "
+        "Select-Object -First 1 -ExpandProperty IPAddress)"
+    )
+    value = subprocess.check_output(
+        ["powershell.exe", "-NoProfile", "-Command", command],
+        text=True,
+        timeout=15,
+    ).strip()
+    return str(ipaddress.ip_address(value))
+
+
+def _getaddrinfo_with_fallback(host, port, *args, **kwargs):
+    normalized = host.decode() if isinstance(host, bytes) else str(host)
+    lowered = normalized.lower()
+    if lowered in _XIAOMI_HOSTS:
+        try:
+            return _original_getaddrinfo(normalized, port, *args, **kwargs)
+        except socket.gaierror:
+            if lowered not in _resolved_cache:
+                _resolved_cache[lowered] = _resolve_with_powershell(lowered)
+            return _original_getaddrinfo(
+                _resolved_cache[lowered], port, *args, **kwargs
+            )
+    return _original_getaddrinfo(host, port, *args, **kwargs)
+
+
+if sys.platform == "win32":
+    socket.getaddrinfo = _getaddrinfo_with_fallback
 
 
 def ok(message: str) -> None:
