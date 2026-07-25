@@ -1,3 +1,7 @@
+param(
+    [switch]$SkipInstall
+)
+
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
@@ -25,11 +29,15 @@ if (-not (Test-Path $venvPython)) {
     }
 }
 
-Write-Host "Installing latest MiService with OTP and Windows certificate support..." -ForegroundColor Yellow
-& $venvPython -m pip install -U miservice aiohttp truststore
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to install the latest MiService." -ForegroundColor Red
-    exit $LASTEXITCODE
+if ($SkipInstall) {
+    Write-Host "跳过安装，使用已经准备好的认证环境。" -ForegroundColor Green
+} else {
+    Write-Host "Installing latest MiService with OTP and Windows certificate support..." -ForegroundColor Yellow
+    & $venvPython -m pip install -U miservice aiohttp truststore
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to install the latest MiService." -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
 }
 
 $miUser = ""

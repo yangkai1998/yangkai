@@ -172,6 +172,23 @@ self-signed certificate in certificate chain
 
 说明浏览器与 Python 使用了不同证书库，或本机代理/杀毒软件检查 HTTPS。最新版脚本已通过 `truststore` 让 Python 使用 Windows 信任证书库；重新下载脚本再运行即可。不要通过关闭 SSL 校验来绕过。
 
+在中国大陆，如果关闭 Clash 后无法下载 GitHub 文件，按以下顺序：
+
+1. 打开 Clash：下载脚本并安装 `miservice`、`aiohttp`、`truststore`
+2. 完全退出 Clash
+3. 使用 `-SkipInstall` 运行本地脚本，不再访问 GitHub/PyPI
+
+```powershell
+# Clash 开启时
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-xiaomi-modern-login.ps1" `
+  -OutFile "$HOME\xiaoai-setup\modern-login.ps1"
+& "$HOME\xiaomi-auth-venv\Scripts\python.exe" -m pip install -U miservice aiohttp truststore
+
+# 然后完全退出 Clash
+pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\modern-login.ps1" -SkipInstall
+```
+
 ---
 
 ## 6. 备选：抓「小爱对话」Cookie（不是商城 Cookie）
