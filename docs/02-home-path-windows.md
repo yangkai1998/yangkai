@@ -59,18 +59,29 @@ python -m pip install -U --user miservice_fork
 
 ## 3. 获取音箱 DID（Windows 正确命令）
 
+> 注意：Windows 上 **不要**用 `python -m micli`（会报 `No module named micli`）。  
+> 应直接运行 `micli`，或用下面的完整路径。
+
 把下面的账号密码换成你自己的（**不要发给我**）：
 
 ```powershell
 $env:MI_USER = "你的小米账号手机号或邮箱"
 $env:MI_PASS = "你的小米密码"
-python -m micli list
+
+# 优先试这个
+micli list
 ```
 
-如果 `python -m micli` 报找不到模块，再试：
+如果提示找不到 `micli`，用完整路径（按你机器上的 Python 路径）：
 
 ```powershell
-micli list
+& "$env:LOCALAPPDATA\Programs\Python\Python312\Scripts\micli.exe" list
+```
+
+还不行再试这条兜底命令：
+
+```powershell
+python -c "import runpy,sys; sys.argv=['micli','list']; runpy.run_module('miservice.cli', run_name='__main__')"
 ```
 
 成功时会列出设备，找到小爱音箱那一行，记下 `did`（一串数字）。
