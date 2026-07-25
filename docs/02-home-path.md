@@ -6,6 +6,12 @@
 
 ## 1. 安装依赖并获取 DID
 
+> 如果你是 **Windows PowerShell**，请直接看：  
+> [02-home-path-windows.md](./02-home-path-windows.md)  
+> （PowerShell 不能用 `export`，要用 `$env:MI_USER = "..."`）
+
+Linux / macOS：
+
 ```bash
 pip install -U miservice_fork
 export MI_USER='你的小米账号'
