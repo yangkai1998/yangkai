@@ -1,0 +1,9 @@
+services:
+  xiaogpt:
+    image: yihong0618/xiaogpt:latest
+    container_name: yangkai-xiaogpt
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./xiao_config.yaml:/config/xiao_config.yaml:ro
+    command: ["--config", "/config/xiao_config.yaml", "--use_chatgpt_api", "--mute_xiaoai", "--stream"]

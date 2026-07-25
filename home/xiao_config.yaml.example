@@ -1,0 +1,39 @@
+# 居家推荐路径：基于开源 xiaogpt 的本地桥接
+# 复制为 xiao_config.yaml 后填写，再按 docs/02-home-path.md 启动
+
+# 音箱型号（看音箱底部贴纸，或 micli mina）
+hardware: LX06
+
+# 小米账号（建议优先 cookie；账号密码可能触发风控）
+account: "你的小米ID或手机号"
+password: "你的密码"
+# cookie: "从浏览器抓到的服务 cookie，可选"
+mi_did: "音箱DID"
+
+# OpenAI 兼容大模型
+bot: chatgptapi
+openai_key: "sk-xxxxxxxx"
+api_base: "https://api.openai.com/v1"
+# 国内示例：
+# api_base: "https://api.deepseek.com/v1"
+# openai_key: "sk-deepseek-xxx"
+
+gpt_options:
+  model: "gpt-4o-mini"
+  temperature: 0.7
+
+# 只有这些开头的话才会交给大模型（路径 B）
+keyword:
+  - "问助手"
+  - "问杨凯"
+  - "帮我问"
+
+prompt: "你是居家小爱音箱上的智能助手，用简洁中文回答，尽量 80 字以内，不要 Markdown。"
+mute_xiaoai: true
+stream: true
+verbose: true
+use_command: false
+
+# 持续对话（可选）
+start_conversation: "开始持续对话"
+end_conversation: "结束持续对话"
