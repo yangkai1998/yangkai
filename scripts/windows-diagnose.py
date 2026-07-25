@@ -164,7 +164,8 @@ async def diagnose_deepseek(config: dict) -> None:
             model=model,
             messages=[{"role": "user", "content": "只回复两个字：正常"}],
             temperature=0,
-            max_tokens=8,
+            max_tokens=32,
+            extra_body={"thinking": {"type": "disabled"}},
         )
         text = (response.choices[0].message.content or "").strip()
         ok(f"DeepSeek API 调用成功，模型={model}，回复={text!r}")

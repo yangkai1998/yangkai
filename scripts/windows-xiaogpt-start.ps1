@@ -78,6 +78,9 @@ api_base: "https://api.deepseek.com/v1"
 gpt_options:
   model: "deepseek-v4-flash"
   temperature: 0.7
+  extra_body:
+    thinking:
+      type: "disabled"
 
 keyword:
   - "问助手"
@@ -128,49 +131,6 @@ async def login_with_cached_token(self):
 
 
 MiGPT.login_miboy = login_with_cached_token
-
-
-async def get_latest_ask_via_ubus(self, _session):
-    """Read the latest voice query directly from the speaker's MiNA UBus API."""
-    try:
-        messages = await self.mina_service.get_latest_ask(self.device_id)
-    except Exception as exc:
-        self.log.warning("读取音箱问题失败：%s", exc)
-        return None
-    if not messages:
-        return None
-
-    message = max(messages, key=lambda item: int(item.get("timestamp_ms", 0)))
-    timestamp = int(message.get("timestamp_ms", 0))
-    if timestamp <= self.last_timestamp:
-        return None
-
-    answers = message.get("response", {}).get("answer", [])
-    if not answers:
-        return None
-    answer = answers[0]
-    query = str(answer.get("question", "")).strip()
-    for prefix in ("小爱同学，", "小爱同学,", "小爱同学"):
-        if query.startswith(prefix):
-            query = query[len(prefix):].strip()
-            break
-    if not query:
-        return None
-
-    record = {
-        "query": query,
-        "time": timestamp,
-        "answers": [{"tts": {"text": str(answer.get("content", ""))}}],
-    }
-    self.last_timestamp = timestamp
-    try:
-        self.last_record.put_nowait(record)
-    except asyncio.QueueFull:
-        return None
-    return record
-
-
-MiGPT.get_latest_ask_from_xiaoai = get_latest_ask_via_ubus
 config = Config(**Config.read_from_file(sys.argv[1]))
 
 

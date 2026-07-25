@@ -230,7 +230,8 @@ pwsh -ExecutionPolicy Bypass `
 最终启动器默认：
 
 - `verbose: false`，避免调试日志打印 API Key
-- 通过音箱 MiNA UBus 获取最新语音问题，绕过可能长期返回空记录的旧 conversation 接口
+- 使用已实测能返回 LX06 问题的 conversation 接口
+- 为 DeepSeek V4 Flash 显式关闭思考模式，避免语音短答只返回推理内容而最终文本为空
 
 ---
 
