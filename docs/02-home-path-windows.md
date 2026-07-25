@@ -33,6 +33,34 @@ python -m pip --version
 
 两条都能输出版本号，再继续。
 
+## 1.5 一键安装并获取 DID（推荐）
+
+如果你不熟悉命令行，可以使用仓库里的引导脚本。它会：
+
+1. 检查 Python 版本
+2. 安装 `miservice_fork` 和 `xiaogpt`
+3. 安全提示输入小米 ID 和密码（密码不会显示、不会写入文件）
+4. 尝试生成 `.mi.token` 并列出设备 DID
+
+在仓库目录运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows-xiaoai-setup.ps1
+```
+
+如果 Windows 电脑上没有仓库，可单独下载脚本：
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\xiaoai-setup" | Out-Null
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-xiaoai-setup.ps1" `
+  -OutFile "$HOME\xiaoai-setup\setup.ps1"
+powershell -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\setup.ps1"
+```
+
+> 输入账号时请用「小米 ID 数字」，不要用手机号。  
+> 脚本第一遍 `micli play` 可能报错；继续看随后 `micli list` 的结果。
+
 ### 方式 B：Microsoft Store
 
 1. 打开 Microsoft Store
