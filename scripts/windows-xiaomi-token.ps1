@@ -54,7 +54,14 @@ function Read-RequiredSecret {
     }
 }
 
-$userId = Read-RequiredText "Paste the userId cookie value:"
+$userId = ""
+while ($userId -notmatch "^\d+$") {
+    $userId = Read-RequiredText "Paste the userId cookie value (digits only; do NOT use cUserId):"
+    if ($userId -notmatch "^\d+$") {
+        Write-Host "Wrong value: userId must contain digits only. You probably copied cUserId." -ForegroundColor Red
+        $userId = ""
+    }
+}
 $deviceId = Read-RequiredText "Paste the deviceId cookie value:"
 $passToken = Read-RequiredSecret "Paste the passToken cookie value:"
 

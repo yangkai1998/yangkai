@@ -104,7 +104,7 @@ Login failed
 5. 左边展开 `Cookies`
 6. 点击 `https://account.xiaomi.com`
 7. 找到并保留这三个值：
-   - `userId`
+   - `userId`：值必须是纯数字；**不要复制 `cUserId`**（它通常以字母开头）
    - `passToken`
    - `deviceId`
 
