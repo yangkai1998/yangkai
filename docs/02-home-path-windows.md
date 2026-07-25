@@ -227,6 +227,11 @@ pwsh -ExecutionPolicy Bypass `
 
 脚本会隐藏输入 DeepSeek API Key、生成本地配置并启动 xiaogpt。
 
+最终启动器默认：
+
+- `verbose: false`，避免调试日志打印 API Key
+- 通过音箱 MiNA UBus 获取最新语音问题，绕过可能长期返回空记录的旧 conversation 接口
+
 ---
 
 ## 7. 做完后回传给我这些（可打码）
