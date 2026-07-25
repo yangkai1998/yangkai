@@ -1,0 +1,112 @@
+param(
+    [string]$XiaomiId,
+    [string]$Did
+)
+
+$ErrorActionPreference = "Stop"
+
+Write-Host ""
+Write-Host "=== XiaoAi DeepSeek configuration and startup ===" -ForegroundColor Cyan
+Write-Host ""
+
+if ([string]::IsNullOrWhiteSpace($XiaomiId)) {
+    while ($XiaomiId -notmatch "^\d+$") {
+        Write-Host "请输入纯数字小米 ID，然后按回车：" -ForegroundColor Cyan
+        $XiaomiId = Read-Host
+        if ($XiaomiId -notmatch "^\d+$") {
+            Write-Host "小米 ID 必须是纯数字。" -ForegroundColor Red
+            $XiaomiId = ""
+        }
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Did)) {
+    while ($Did -notmatch "^\d+$") {
+        Write-Host "请输入 LX06 的 DID（纯数字），然后按回车：" -ForegroundColor Cyan
+        $Did = Read-Host
+        if ($Did -notmatch "^\d+$") {
+            Write-Host "DID 必须是纯数字。" -ForegroundColor Red
+            $Did = ""
+        }
+    }
+}
+
+$apiKey = ""
+$keyPtr = [IntPtr]::Zero
+while ([string]::IsNullOrWhiteSpace($apiKey)) {
+    Write-Host ""
+    Write-Host "请输入新创建的 DeepSeek API Key，然后按回车（输入过程不会显示字符）：" -ForegroundColor Cyan
+    $secureKey = Read-Host -AsSecureString
+    $keyPtr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
+    $apiKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($keyPtr)
+    if ([string]::IsNullOrWhiteSpace($apiKey)) {
+        Write-Host "API Key 不能为空。" -ForegroundColor Red
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($keyPtr)
+        $keyPtr = [IntPtr]::Zero
+    }
+}
+
+$scriptsDir = & python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+$xiaogpt = Join-Path $scriptsDir "xiaogpt.exe"
+$tokenPath = Join-Path $HOME ".mi.token"
+$setupDir = Join-Path $HOME "xiaoai-setup"
+$configPath = Join-Path $setupDir "xiao_config.yaml"
+
+if (-not (Test-Path $xiaogpt)) {
+    Write-Host "找不到 xiaogpt.exe，请先运行 windows-xiaoai-setup.ps1。" -ForegroundColor Red
+    exit 1
+}
+if (-not (Test-Path $tokenPath)) {
+    Write-Host "找不到 $tokenPath，请先完成小米登录。" -ForegroundColor Red
+    exit 1
+}
+
+New-Item -ItemType Directory -Force $setupDir | Out-Null
+$safeKey = $apiKey.Replace("'", "''")
+
+$config = @"
+hardware: LX06
+account: "$XiaomiId"
+password: ""
+cookie: ""
+mi_did: "$Did"
+
+bot: chatgptapi
+openai_key: '$safeKey'
+api_base: "https://api.deepseek.com/v1"
+gpt_options:
+  model: "deepseek-v4-flash"
+  temperature: 0.7
+
+keyword:
+  - "问助手"
+  - "问杨凯"
+  - "帮我问"
+
+prompt: "你是居家小爱音箱上的智能助手。请用简洁自然的中文回答，尽量控制在80字以内，不要使用Markdown。"
+mute_xiaoai: true
+stream: true
+verbose: true
+use_command: false
+tts: mi
+
+start_conversation: "开始持续对话"
+end_conversation: "结束持续对话"
+"@
+
+try {
+    $config | Set-Content -Path $configPath -Encoding UTF8
+    Write-Host ""
+    Write-Host "配置已保存到：$configPath" -ForegroundColor Green
+    Write-Host "此文件含 API Key，不要发送或上传。" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "正在启动 xiaogpt。保持此窗口开启。" -ForegroundColor Cyan
+    Write-Host "启动成功后请说：小爱同学，问助手，今天适合吃什么？" -ForegroundColor Cyan
+    Write-Host ""
+    & $xiaogpt --config $configPath
+} finally {
+    if ($keyPtr -ne [IntPtr]::Zero) {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($keyPtr)
+    }
+    $apiKey = $null
+}

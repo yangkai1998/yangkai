@@ -197,6 +197,36 @@ docker compose logs -f
 - 触发大模型：「小爱同学，问助手，番茄炒蛋怎么做」
 - 不触发：「小爱同学，播放轻音乐」
 
+## 6.1 拿到 DID 后的一键配置和启动
+
+先测试新版认证是否能控制音箱（把 DID 换成实际值）：
+
+```powershell
+$env:MI_DID = "你的DID"
+& "$HOME\xiaomi-auth-venv\Scripts\python.exe" `
+  -c "import truststore; truststore.inject_into_ssl(); from miservice.__main__ import main; main()" `
+  mina "小爱音箱连接成功"
+```
+
+听到播报后，下载最终启动脚本（下载时可开启 Clash）：
+
+```powershell
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-xiaogpt-start.ps1" `
+  -OutFile "$HOME\xiaoai-setup\start-xiaogpt.ps1"
+```
+
+关闭 Clash 后运行（参数按实际值填写）：
+
+```powershell
+pwsh -ExecutionPolicy Bypass `
+  -File "$HOME\xiaoai-setup\start-xiaogpt.ps1" `
+  -XiaomiId "你的小米ID" `
+  -Did "你的DID"
+```
+
+脚本会隐藏输入 DeepSeek API Key、生成本地配置并启动 xiaogpt。
+
 ---
 
 ## 7. 做完后回传给我这些（可打码）
