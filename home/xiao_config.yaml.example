@@ -1,5 +1,8 @@
 # 居家推荐路径：基于开源 xiaogpt 的本地桥接
 # 复制为 xiao_config.yaml 后填写，再按 docs/02-home-path.md 启动
+#
+# 重要：真正的 API Key / 密码只写进 xiao_config.yaml（已被 gitignore）
+# 不要写进本 example 文件，也不要提交到 GitHub
 
 # 音箱型号（看音箱底部贴纸，或 micli mina）
 hardware: LX06
@@ -10,19 +13,16 @@ password: "你的密码"
 # cookie: "从浏览器抓到的服务 cookie，可选"
 mi_did: "音箱DID"
 
-# OpenAI 兼容大模型
+# DeepSeek（已验证可用）
 bot: chatgptapi
-openai_key: "sk-xxxxxxxx"
-api_base: "https://api.openai.com/v1"
-# 国内示例：
-# api_base: "https://api.deepseek.com/v1"
-# openai_key: "sk-deepseek-xxx"
+openai_key: "sk-在这里粘贴你的完整密钥"
+api_base: "https://api.deepseek.com/v1"
 
 gpt_options:
-  model: "gpt-4o-mini"
+  model: "deepseek-v4-flash"
   temperature: 0.7
 
-# 只有这些开头的话才会交给大模型（路径 B）
+# 只有这些开头的话才会交给大模型
 keyword:
   - "问助手"
   - "问杨凯"
