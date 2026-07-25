@@ -83,7 +83,55 @@ micli list
 
 ---
 
-## 4. 仍失败：抓「小爱对话」Cookie（不是商城 Cookie）
+## 4. 推荐：用浏览器 passToken 自动生成 `.mi.token`
+
+如果错误是：
+
+```text
+KeyError: 'userId'
+Login failed
+```
+
+说明密码登录被小米拦截。使用仓库里的引导脚本，不需要手写 JSON。
+
+### 4.1 在浏览器取得 3 个值
+
+1. 登录：https://account.xiaomi.com
+2. 同一浏览器打开：  \
+   `https://account.xiaomi.com/pass/serviceLogin?sid=xiaomiio&_json=true`
+3. 按 `F12`
+4. 切到 `Application（应用）`；若没有则找 `Storage（存储）`
+5. 左边展开 `Cookies`
+6. 点击 `https://account.xiaomi.com`
+7. 找到并保留这三个值：
+   - `userId`
+   - `passToken`
+   - `deviceId`
+
+`passToken` 等同密码，绝对不要截图或发给别人。
+
+### 4.2 下载并运行脚本
+
+PowerShell：
+
+```powershell
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-xiaomi-token.ps1" `
+  -OutFile "$HOME\xiaoai-setup\xiaomi-token.ps1"
+pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\xiaomi-token.ps1"
+```
+
+按提示分别粘贴三个值。输入 `passToken` 时屏幕不会显示字符。
+
+脚本会：
+
+1. 写入 `C:\Users\你的用户名\.mi.token`
+2. 自动运行 `micli list`
+3. 若认证成功，显示设备列表和 DID
+
+---
+
+## 5. 备选：抓「小爱对话」Cookie（不是商城 Cookie）
 
 关键：要从小爱相关域名抓，不要只从 `mi.com` 商城页抓。
 
@@ -111,7 +159,7 @@ cookie: "整段Cookie"
 
 ---
 
-## 5. 拿到 DID 后最小可运行配置
+## 6. 拿到 DID 后最小可运行配置
 
 ```yaml
 hardware: LX06
@@ -141,7 +189,7 @@ xiaogpt --config home\xiao_config.yaml --use_chatgpt_api --mute_xiaoai --stream
 
 ---
 
-## 6. 安全
+## 7. 安全
 
 如果 Key / Cookie 曾经写进 example 或发到聊天：
 
