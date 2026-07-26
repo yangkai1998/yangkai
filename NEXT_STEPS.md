@@ -2,40 +2,34 @@
 
 ## 当前进度
 
-- [x] DeepSeek API Key 已申请（模型：`deepseek-v4-flash`，余额约 10 元）
-- [x] 音箱型号确认：`LX06`
-- [x] 运行环境确认：家里 Windows 电脑 + Python
-- [x] 网页可登录小米，但 `micli list` 报 Login failed（风控）
-- [ ] 配置写到正确文件：`home/xiao_config.yaml`（不是 `.example`）
-- [ ] 用小米 ID + `micli play` / Cookie 绕过风控，拿到 DID
-- [ ] 启动 xiaogpt 并联调音箱
+- [x] DeepSeek API Key 已申请（模型：`deepseek-v4-flash`）
+- [x] 音箱型号确认：`LX06`，DID 已拿到
+- [x] Windows 上 xiaogpt 已联调通过（含 mute / keyword / token 缓存）
+- [ ] （可选）迁到绿联 NAS，实现开机常驻、不用开 Windows
 
-## 安全提醒（先做）
+## 推荐下一步：迁到绿联 NAS
 
-1. **密钥只写 `home/xiao_config.yaml`，千万别写 `.example`**
-2. 如果 Key/Cookie 曾写进 example 或发到聊天：去 DeepSeek 删旧 Key 并新建；小米建议改密
-3. 不要把完整 Cookie / Key 发到聊天
+完整步骤见：**[docs/06-ugreen-nas.md](./docs/06-ugreen-nas.md)**
 
-## 下一步（先做这个）
+最短操作：
 
-见：`docs/05-xiaomi-login-fix.md`
+1. Windows 停掉正在跑的 xiaogpt  
+2. 拷贝这两个文件到 NAS（例如 `docker/xiaogpt/`）：
+   - `C:\Users\你的用户名\xiaoai-setup\xiao_config.yaml`
+   - `C:\Users\你的用户名\.mi.token` → 改名为 `mi.token`
+3. 同目录放入仓库 `home/docker-compose.yml`
+4. 绿联 Docker → 项目 → 创建 → 部署
+5. 说：「小爱同学，问助手，今天适合吃什么？」验收
+6. 以后只在 NAS 上跑，Windows 不再启动
 
-```powershell
-$env:MI_USER = "你的小米ID数字"
-$env:MI_PASS = "你的密码"
-micli play
-micli list
-```
+## 安全提醒
 
-成功后把音箱 `did` 填进 `home/xiao_config.yaml`，再启动：
+1. `xiao_config.yaml` / `mi.token` 含密钥，不要上传公开网盘或 GitHub  
+2. 若 Key 曾泄露：去 DeepSeek 删旧 Key 并新建  
 
-```powershell
-python -m pip install -U "xiaogpt[locked]"
-xiaogpt --config home\xiao_config.yaml --use_chatgpt_api --mute_xiaoai --stream
-```
+## 其他文档
 
-## 详细说明
-
-- 登录失败专页：`docs/05-xiaomi-login-fix.md`
+- 绿联迁移/重装：`docs/06-ugreen-nas.md`
+- 小爱抢话说明：`docs/04-troubleshooting.md`
 - Windows 专版：`docs/02-home-path-windows.md`
-- 总计划：`PLAN.md`
+- 登录风控：`docs/05-xiaomi-login-fix.md`

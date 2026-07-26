@@ -2,6 +2,8 @@
 
 ## 居家桥接（xiaogpt）
 
+> 绿联 NAS 迁移/重装见 [06-ugreen-nas.md](./06-ugreen-nas.md)。
+
 ### 1) 登录失败 / Login failed
 
 原因：小米风控或账号二次验证。  

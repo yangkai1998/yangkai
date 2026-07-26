@@ -5,6 +5,9 @@ home/xiao_config.yaml
 **/*.pem
 **/cookie*.txt
 .mi.token
+mi.token
+**/xiao_config.yaml
+!**/xiao_config.yaml.example
 
 # Python
 __pycache__/

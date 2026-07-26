@@ -39,14 +39,16 @@ scripts/smoke_test.sh   # 后端冒烟测试
 ### 路径 A（推荐）
 
 1. 阅读 [docs/01-prerequisites.md](./docs/01-prerequisites.md)
-2. **Windows 用户**看 [docs/02-home-path-windows.md](./docs/02-home-path-windows.md)  
-   Linux/macOS 看 [docs/02-home-path.md](./docs/02-home-path.md)
+2. 按设备选文档：
+   - **Windows**： [docs/02-home-path-windows.md](./docs/02-home-path-windows.md)
+   - **绿联 NAS（推荐常开）**： [docs/06-ugreen-nas.md](./docs/06-ugreen-nas.md)
+   - Linux/macOS： [docs/02-home-path.md](./docs/02-home-path.md)
 3. 填写 `home/xiao_config.yaml` 后启动（Windows 也可用 Python 直接跑 `xiaogpt`）
 
 ```bash
 cd home
 cp xiao_config.yaml.example xiao_config.yaml
-# 编辑 xiao_config.yaml
+# 编辑 xiao_config.yaml；若用 Docker 还需准备 mi.token（见 NAS 文档）
 docker compose up -d
 ```
 

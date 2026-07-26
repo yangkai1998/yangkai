@@ -4,6 +4,8 @@
 
 底层使用成熟开源项目 [xiaogpt](https://github.com/yihong0618/xiaogpt)。本仓库提供针对你需求的配置模板与步骤。
 
+> **绿联 NAS**：想 7×24 挂在 NAS 上，直接看 [06-ugreen-nas.md](./06-ugreen-nas.md)（含从 Windows 迁移步骤）。
+
 ## 1. 安装依赖并获取 DID
 
 > 如果你是 **Windows PowerShell**，请直接看：  
