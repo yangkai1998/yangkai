@@ -227,6 +227,28 @@ pwsh -ExecutionPolicy Bypass `
 
 脚本会隐藏输入 DeepSeek API Key、生成本地配置并启动 xiaogpt。
 
+### 终端关闭后怎么重新启动
+
+如果已经完成过首次配置（已有 `xiao_config.yaml` 和 `.mi.token`），**不需要重新输入 API Key**：
+
+```powershell
+pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\restart-xiaogpt.ps1"
+```
+
+或创建桌面快捷方式（开 Clash 下载后执行一次即可）：
+
+```powershell
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-restart-xiaogpt.ps1" `
+  -OutFile "$HOME\xiaoai-setup\restart-xiaogpt.ps1"
+Invoke-WebRequest `
+  "https://raw.githubusercontent.com/yangkai1998/yangkai/cursor/xiaoai-llm-bridge-c4d6/scripts/windows-create-shortcut.ps1" `
+  -OutFile "$HOME\xiaoai-setup\create-shortcut.ps1"
+pwsh -ExecutionPolicy Bypass -File "$HOME\xiaoai-setup\create-shortcut.ps1"
+```
+
+之后桌面会出现「启动小爱DeepSeek」，双击即可重新启动。
+
 最终启动器默认：
 
 - `verbose: false`，避免调试日志打印 API Key
