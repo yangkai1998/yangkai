@@ -1,0 +1,5 @@
+photo-restore/models/
+photo-restore/output/
+__pycache__/
+*.pth
+.venv/
