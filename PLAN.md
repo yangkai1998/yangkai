@@ -159,7 +159,7 @@ xiaogpt --config home/xiao_config.yaml --use_chatgpt_api --mute_xiaoai --stream
 
 1. **登录失败**：多半是小米风控，改 cookie
 2. **终端有字但音箱不说**：部分型号加 `use_command: true`
-3. **小爱抢话**：保持 `mute_xiaoai: true`；无法彻底消除时，口令后稍停顿
+3. **小爱抢话**：保持 `mute_xiaoai: true`；LX06 未刷机时通常仍会先出 1～2 秒原厂语音（云端落盘延迟），详见 `docs/04-troubleshooting.md`
 4. **回答太长**：prompt 已限制字数；还可把 `max_tokens` 调小
 
 详细操作见：`docs/02-home-path.md`
