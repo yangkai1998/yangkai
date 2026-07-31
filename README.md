@@ -34,6 +34,13 @@ scripts/smoke_test.sh   # 后端冒烟测试
 - 带口令：走大模型
 - 不带口令：仍由原生小爱处理（播放音乐、控灯等）
 
+## 给朋友的操作手册（PDF）
+
+可直接转发的安装说明（不含任何密钥）：
+
+- [docs/exports/xiaoai-deepseek-friend-guide.pdf](./docs/exports/xiaoai-deepseek-friend-guide.pdf)
+- 重新生成：`python3 scripts/generate_friend_guide_pdf.py`
+
 ## 快速开始
 
 ### 路径 A（推荐）
