@@ -3,20 +3,24 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host ""
 Write-Host "=== Modern Xiaomi login (OTP supported) ===" -ForegroundColor Cyan
-Write-Host "This uses the latest MiService in an isolated environment." -ForegroundColor DarkGray
-Write-Host "It does not modify the xiaogpt installation." -ForegroundColor DarkGray
+Write-Host "Uses latest MiService in an isolated venv." -ForegroundColor DarkGray
+Write-Host "Does not modify the xiaogpt installation." -ForegroundColor DarkGray
 Write-Host ""
 
 try {
     $pythonVersion = & python --version 2>&1
 } catch {
-    Write-Host "Python was not found." -ForegroundColor Red
+    Write-Host "Python was not found. Install Python 3.12+ and reopen PowerShell." -ForegroundColor Red
     exit 1
 }
 Write-Host "Found $pythonVersion" -ForegroundColor Green
+
+$setupDir = Join-Path $HOME "xiaoai-setup"
+New-Item -ItemType Directory -Force $setupDir | Out-Null
 
 $venvPath = Join-Path $HOME "xiaomi-auth-venv"
 $venvPython = Join-Path $venvPath "Scripts\python.exe"
@@ -30,12 +34,16 @@ if (-not (Test-Path $venvPython)) {
 }
 
 if ($SkipInstall) {
-    Write-Host "跳过安装，使用已经准备好的认证环境。" -ForegroundColor Green
+    Write-Host "Skip install: reuse existing auth venv." -ForegroundColor Green
+    if (-not (Test-Path $venvPython)) {
+        Write-Host "Auth venv missing. Re-run WITHOUT -SkipInstall first." -ForegroundColor Red
+        exit 1
+    }
 } else {
-    Write-Host "Installing latest MiService with OTP and Windows certificate support..." -ForegroundColor Yellow
+    Write-Host "Installing latest MiService + truststore..." -ForegroundColor Yellow
     & $venvPython -m pip install -U miservice aiohttp truststore
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Failed to install the latest MiService." -ForegroundColor Red
+        Write-Host "Failed to install MiService. Open Clash/proxy and retry without -SkipInstall." -ForegroundColor Red
         exit $LASTEXITCODE
     }
 }
@@ -43,10 +51,10 @@ if ($SkipInstall) {
 $miUser = ""
 while ($miUser -notmatch "^\d+$") {
     Write-Host ""
-    Write-Host "请输入纯数字小米 ID（不要用手机号或 cUserId），然后按回车：" -ForegroundColor Cyan
+    Write-Host "Enter numeric Xiaomi ID (digits only), then Enter:" -ForegroundColor Cyan
     $miUser = Read-Host
     if ($miUser -notmatch "^\d+$") {
-        Write-Host "小米 ID 必须是纯数字，请重新输入。" -ForegroundColor Red
+        Write-Host "Xiaomi ID must be digits only." -ForegroundColor Red
         $miUser = ""
     }
 }
@@ -55,12 +63,12 @@ $miPassword = ""
 $passwordPtr = [IntPtr]::Zero
 while ([string]::IsNullOrEmpty($miPassword)) {
     Write-Host ""
-    Write-Host "请输入小米密码，然后按回车（输入过程不会显示字符）：" -ForegroundColor Cyan
+    Write-Host "Enter Xiaomi password (hidden), then Enter:" -ForegroundColor Cyan
     $securePassword = Read-Host -AsSecureString
     $passwordPtr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
     $miPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPtr)
     if ([string]::IsNullOrEmpty($miPassword)) {
-        Write-Host "密码不能为空，请重新输入。" -ForegroundColor Red
+        Write-Host "Password cannot be empty." -ForegroundColor Red
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPtr)
         $passwordPtr = [IntPtr]::Zero
     }
@@ -71,29 +79,42 @@ if (Test-Path $tokenPath) {
     $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
     $backup = "$tokenPath.invalid-$stamp"
     Move-Item $tokenPath $backup -Force
-    Write-Host "旧 token 已备份到：$backup" -ForegroundColor DarkGray
+    Write-Host "Old token backed up to: $backup" -ForegroundColor DarkGray
 }
+
+# Avoid python -c quoting issues on Windows PowerShell 5.1
+$helperPy = Join-Path $setupDir "mi_modern_login_helper.py"
+@'
+import truststore
+
+truststore.inject_into_ssl()
+from miservice.__main__ import main
+
+raise SystemExit(main())
+'@ | Set-Content -Path $helperPy -Encoding UTF8
 
 try {
     $env:MI_USER = $miUser
     $env:MI_PASS = $miPassword
 
     Write-Host ""
-    Write-Host "正在登录并查询设备……" -ForegroundColor Yellow
-    Write-Host "如果手机收到验证码，终端会显示 Input Phone Code；输入短信验证码并回车。" -ForegroundColor Cyan
+    Write-Host "Logging in and listing devices..." -ForegroundColor Yellow
+    Write-Host "If phone gets SMS code, terminal shows Input Phone Code. Type code and Enter." -ForegroundColor Cyan
+    Write-Host "TIP: turn OFF Clash/system proxy during Xiaomi login." -ForegroundColor Yellow
     Write-Host ""
 
-    # truststore makes Python use the same Windows certificate store as the browser.
-    # This safely supports antivirus/proxy certificates without disabling TLS checks.
-    & $venvPython -c "import truststore; truststore.inject_into_ssl(); from miservice.__main__ import main; main()" list
+    & $venvPython $helperPy list
     $result = $LASTEXITCODE
 
     Write-Host ""
     if ($result -eq 0 -and (Test-Path $tokenPath)) {
-        Write-Host "登录成功，认证文件已生成：$tokenPath" -ForegroundColor Green
-        Write-Host "请从设备列表中找到 LX06，只记录它的 DID。" -ForegroundColor Cyan
+        Write-Host "Login OK. Token saved to: $tokenPath" -ForegroundColor Green
+        Write-Host "Find LX06 in the device list and note its DID." -ForegroundColor Cyan
+        Write-Host "Then restart bridge:" -ForegroundColor Cyan
+        Write-Host 'python "$HOME\xiaoai-setup\run_xiaogpt_cached.py" "$HOME\xiaoai-setup\xiao_config.yaml"' -ForegroundColor White
     } else {
-        Write-Host "新版登录仍未完成。请发送最后的报错截图（遮住所有凭据）。" -ForegroundColor Yellow
+        Write-Host "Login not finished. Send error text with passwords/codes hidden." -ForegroundColor Yellow
+        Write-Host "If SSL/proxy errors: open Clash only to reinstall packages, then close it and login again with -SkipInstall." -ForegroundColor Yellow
     }
 } finally {
     if ($passwordPtr -ne [IntPtr]::Zero) {
