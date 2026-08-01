@@ -1,0 +1,30 @@
+# 绿联 NAS / 群晖 / 任意 Docker 主机通用
+# 使用前把同目录下的 xiao_config.yaml 和 mi.token 准备好
+#
+# 绿联：Docker → 项目 → 创建 → 粘贴本文件内容
+# 注意：部分绿联机型不支持 network_mode: host，已改用默认 bridge（对云端轮询足够）
+
+services:
+  xiaogpt:
+    image: yihong0618/xiaogpt:latest
+    container_name: yangkai-xiaogpt
+    restart: unless-stopped
+    volumes:
+      # 配置文件（含 DeepSeek Key，不要上传到公开网盘）
+      - ./xiao_config.yaml:/config/xiao_config.yaml:ro
+      # 小米登录缓存：从 Windows 的 %USERPROFILE%\.mi.token 拷过来并改名为 mi.token
+      - ./mi.token:/root/.mi.token:ro
+    environment:
+      # 可选：容器内直接读 Key；更推荐只写在 xiao_config.yaml
+      # OPENAI_API_KEY: ""
+      TZ: Asia/Shanghai
+    command:
+      [
+        "--config",
+        "/config/xiao_config.yaml",
+        "--use_chatgpt_api",
+        "--mute_xiaoai",
+        "--stream",
+      ]
+    # 若你的绿联 Docker 支持 host 网络且 bridge 异常，可取消下一行注释并删除默认 bridge
+    # network_mode: host

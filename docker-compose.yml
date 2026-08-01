@@ -1,0 +1,25 @@
+services:
+  xiaoai-bridge:
+    build:
+      context: ./backend
+    container_name: yangkai-xiaoai-bridge
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Optional: expose local bridge to public HTTPS for XiaoAi Open Platform.
+  # 1) Install cloudflared and login once on the host
+  # 2) Uncomment this service and set TUNNEL_TOKEN
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: unless-stopped
+  #   command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+  #   depends_on:
+  #     - xiaoai-bridge
