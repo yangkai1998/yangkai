@@ -1,0 +1,54 @@
+# 居家推荐路径：基于开源 xiaogpt 的本地桥接
+# 复制为 xiao_config.yaml 后填写
+# Windows：见 docs/02-home-path-windows.md
+# 绿联 NAS：见 docs/06-ugreen-nas.md
+#
+# 重要：真正的 API Key / 密码 / Cookie 只写进 xiao_config.yaml（已被 gitignore）
+# 不要写进本 example 文件，也不要提交到 GitHub
+
+# 音箱型号（看音箱底部贴纸，或 micli mina）
+hardware: LX06
+
+# 小米账号：优先用「小米 ID」数字
+# NAS 上强烈建议用 mi.token，password 可留空
+account: "你的小米ID数字"
+password: ""
+# cookie: ""
+mi_did: "音箱DID"
+
+# DeepSeek
+bot: chatgptapi
+openai_key: "sk-在这里粘贴你的完整密钥"
+api_base: "https://api.deepseek.com/v1"
+
+gpt_options:
+  model: "deepseek-v4-flash"
+  temperature: 0.7
+  # DeepSeek V4 思考模式会导致内容为空，务必关闭
+  extra_body:
+    thinking:
+      type: disabled
+
+# 只有这些开头的话才会交给大模型（含常见 ASR 误听）
+keyword:
+  - "问助手"
+  - "搵助手"
+  - "温助手"
+  - "稳助手"
+  - "问住手"
+  - "问主手"
+  - "问朱手"
+  - "问助首"
+  - "问杨凯"
+  - "帮我问"
+
+prompt: "你是居家小爱音箱上的智能助手。请用简洁自然的中文回答，尽量控制在80字以内，不要使用Markdown。"
+mute_xiaoai: true
+stream: true
+verbose: false
+use_command: false
+tts: mi
+
+# 持续对话（可选）
+start_conversation: "开始持续对话"
+end_conversation: "结束持续对话"
