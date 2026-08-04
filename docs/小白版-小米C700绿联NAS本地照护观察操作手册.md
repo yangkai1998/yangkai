@@ -2,9 +2,12 @@
 
 ## 小白版操作手册
 
-**适用设备：** 绿联 DH4300P（RK3588C、8 GB 内存）  
-**适用系统：** UGOS Pro 1.18.0.0093  
-**摄像头：** 小米 C700，先配置一路  
+**适用设备：** 绿联 DH4300P（RK3588C、8 GB 内存）
+
+**适用系统：** UGOS Pro 1.18.0.0093
+
+**摄像头：** 小米 C700，先配置一路
+
 **文档版本：** 1.0（2026-08-04）
 
 ---
@@ -808,8 +811,5 @@ ____________________________________________________
 
 ## 参考
 
-- 绿联知识中心：容器映射目录权限问题  
-  <https://support.ugnas.com/detail/article/zh-CN/356>
-- 网易邮箱帮助中心：SMTP 与客户端授权密码  
-  <https://help.mail.163.com/searchFAQ.do?m=search&word=smtp>
-
+- [绿联知识中心：容器映射目录权限问题](https://support.ugnas.com/detail/article/zh-CN/356)
+- [网易邮箱帮助中心：SMTP 与客户端授权密码](https://help.mail.163.com/searchFAQ.do?m=search&word=smtp)
