@@ -63,3 +63,10 @@ test('renders the desktop entry without horizontal overflow', async ({ page }) =
   )
   expect(hasHorizontalOverflow).toBe(false)
 })
+
+test('protects the card management console behind an admin token', async ({ page }) => {
+  await page.goto('/admin')
+  await expect(page.getByRole('heading', { name: '卡密管理台' })).toBeVisible()
+  await expect(page.getByPlaceholder('输入 ADMIN_API_TOKEN')).toBeVisible()
+  await expect(page.getByText('生成一批新卡密')).not.toBeVisible()
+})

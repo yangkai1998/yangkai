@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:edge": "npm run build && wrangler pages dev dist",
     "build": "tsc -b && vite build",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name shiguang-persona",
     "preview": "vite preview",
-    "test": "vitest run src",
+    "test": "vitest run src functions",
     "test:e2e": "playwright test"
   },
   "repository": {
@@ -32,12 +34,19 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260804.1",
     "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
     "typescript": "^7.0.2",
     "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.118.0"
+  },
+  "overrides": {
+    "sharp": "0.35.3",
+    "undici": "7.29.0",
+    "ws": "8.21.2"
   }
 }

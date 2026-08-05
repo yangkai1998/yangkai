@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import html2canvas from 'html2canvas'
+import AdminPanel from './AdminPanel'
+import {
+  AccessError,
+  createCompletionKey,
+  getAccessSession,
+  isDemoMode,
+  recordQuizCompletion,
+  redeemAccessCode,
+  type AccessSession,
+} from './accessApi'
 import {
   ArrowRight,
   ChevronLeft,
@@ -16,15 +26,13 @@ import { questions, traitLabels } from './data'
 import { calculateResult } from './engine'
 import { TRAIT_KEYS, type QuizResult, type ResponseStyle, type TraitScores } from './types'
 
-type Stage = 'gate' | 'intro' | 'quiz' | 'result'
+type Stage = 'checking' | 'gate' | 'intro' | 'quiz' | 'result'
 
 const STORAGE = {
-  access: 'shiguang-access-v1',
   progress: 'shiguang-progress-v1',
   result: 'shiguang-result-v1',
+  pendingCompletion: 'shiguang-pending-completion-v1',
 }
-
-const DEMO_CODE = (import.meta.env.VITE_DEMO_ACCESS_CODE || 'SHIGUANG').toUpperCase()
 
 function BrandMark() {
   return (
@@ -40,28 +48,30 @@ function Grain() {
   return <div className="grain" aria-hidden="true" />
 }
 
-function AccessGate({ onUnlock }: { onUnlock: () => void }) {
+function AccessGate({ onUnlock }: { onUnlock: (session: AccessSession) => void }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     const normalized = code.trim().toUpperCase()
     if (!normalized) {
       setError('请先输入体验码')
       return
     }
-    if (normalized !== DEMO_CODE) {
-      setError('体验码不正确，请检查后重试')
-      return
-    }
     setLoading(true)
     setError('')
-    window.setTimeout(() => {
-      localStorage.setItem(STORAGE.access, 'granted')
-      onUnlock()
-    }, 520)
+    try {
+      const session = await redeemAccessCode(normalized)
+      onUnlock(session)
+    } catch (submitError) {
+      setError(
+        submitError instanceof AccessError ? submitError.message : '暂时无法启封，请稍后重试',
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -112,7 +122,7 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
                 setCode(event.target.value)
                 setError('')
               }}
-              placeholder="例如：SHIGUANG"
+              placeholder={isDemoMode ? '例如：SHIGUANG' : '例如：SG-A8K2-P9X7'}
               autoComplete="off"
               spellCheck={false}
             />
@@ -122,7 +132,7 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
             </button>
           </div>
           {error && <p className="form-error">{error}</p>}
-          <p className="demo-hint">原型体验码：SHIGUANG</p>
+          {isDemoMode && <p className="demo-hint">原型体验码：SHIGUANG</p>}
           <div className="access-notes">
             <span>
               <ShieldCheck size={14} /> 结果仅保存在本机
@@ -139,7 +149,16 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
   )
 }
 
-function Intro({ onStart, onResume }: { onStart: () => void; onResume: (() => void) | null }) {
+function Intro({
+  onStart,
+  onResume,
+  session,
+}: {
+  onStart: () => void
+  onResume: (() => void) | null
+  session: AccessSession
+}) {
+  const hasAttempts = session.remainingCompletions > 0
   return (
     <main className="intro-page">
       <Grain />
@@ -180,14 +199,19 @@ function Intro({ onStart, onResume }: { onStart: () => void; onResume: (() => vo
           </div>
         </div>
         <div className="intro-actions">
-          <button className="primary-cta" onClick={onStart}>
-            <span>开始寻迹</span>
-            <ArrowRight size={19} />
+          <button className="primary-cta" onClick={onStart} disabled={!hasAttempts}>
+            <span>{hasAttempts ? '开始寻迹' : '测试次数已用完'}</span>
+            {hasAttempts && <ArrowRight size={19} />}
           </button>
           {onResume && (
             <button className="text-cta" onClick={onResume}>
               继续上次进度
             </button>
+          )}
+          {!isDemoMode && (
+            <span className="attempt-note">
+              当前卡密还可完成 {session.remainingCompletions} 次测试
+            </span>
           )}
         </div>
         <p className="quiet-note">
@@ -227,12 +251,13 @@ function Quiz({
   onFinish,
 }: {
   initialAnswers: ResponseStyle[]
-  onFinish: (answers: ResponseStyle[]) => void
+  onFinish: (answers: ResponseStyle[]) => Promise<void>
 }) {
   const [answers, setAnswers] = useState<ResponseStyle[]>(initialAnswers)
   const [index, setIndex] = useState(Math.min(initialAnswers.length, questions.length - 1))
   const [selected, setSelected] = useState<number | null>(null)
   const [leaving, setLeaving] = useState(false)
+  const [finishError, setFinishError] = useState('')
   const question = questions[index]
 
   useEffect(() => {
@@ -245,11 +270,20 @@ function Quiz({
     setAnswers(nextAnswers)
     setSelected(optionIndex)
     setLeaving(true)
+    setFinishError('')
 
-    window.setTimeout(() => {
+    window.setTimeout(async () => {
       if (index === questions.length - 1) {
-        localStorage.removeItem(STORAGE.progress)
-        onFinish(nextAnswers)
+        try {
+          await onFinish(nextAnswers)
+          localStorage.removeItem(STORAGE.progress)
+        } catch (error) {
+          setFinishError(
+            error instanceof AccessError ? error.message : '结果保存失败，请稍后再试',
+          )
+          setSelected(null)
+          setLeaving(false)
+        }
         return
       }
       setIndex((value) => value + 1)
@@ -300,6 +334,7 @@ function Quiz({
             ))}
           </div>
         </div>
+        {finishError && <p className="quiz-error">{finishError}</p>}
         <p className="quiz-tip">
           <Sparkles size={14} />
           不必反复权衡，第一反应往往更接近你
@@ -355,7 +390,15 @@ function RadarChart({ scores }: { scores: TraitScores }) {
   )
 }
 
-function ResultPage({ result, onRestart }: { result: QuizResult; onRestart: () => void }) {
+function ResultPage({
+  result,
+  onRestart,
+  canRestart,
+}: {
+  result: QuizResult
+  onRestart: () => void
+  canRestart: boolean
+}) {
   const [saving, setSaving] = useState(false)
   const [shareLabel, setShareLabel] = useState('分享结果')
   const cardRef = useRef<HTMLDivElement>(null)
@@ -518,9 +561,9 @@ function ResultPage({ result, onRestart }: { result: QuizResult; onRestart: () =
           </div>
         </section>
 
-        <button className="restart-button" onClick={onRestart}>
+        <button className="restart-button" onClick={onRestart} disabled={!canRestart}>
           <RotateCcw size={16} />
-          换一种选择，重新寻迹
+          {canRestart ? '换一种选择，重新寻迹' : '本卡密的测试次数已用完'}
         </button>
         <p className="result-disclaimer">人格会随经历生长，本结果不是心理诊断，也不定义你。</p>
       </section>
@@ -537,9 +580,20 @@ function readStoredAnswers(): ResponseStyle[] {
   }
 }
 
-export default function App() {
-  const hasAccess = localStorage.getItem(STORAGE.access) === 'granted'
-  const [stage, setStage] = useState<Stage>(hasAccess ? 'intro' : 'gate')
+function LoadingScreen() {
+  return (
+    <main className="loading-page">
+      <Grain />
+      <BrandMark />
+      <p>正在核验时空凭证</p>
+      <span />
+    </main>
+  )
+}
+
+function QuizApp() {
+  const [stage, setStage] = useState<Stage>('checking')
+  const [session, setSession] = useState<AccessSession | null>(null)
   const [savedAnswers, setSavedAnswers] = useState<ResponseStyle[]>(readStoredAnswers)
   const [result, setResult] = useState<QuizResult | null>(() => {
     try {
@@ -552,39 +606,92 @@ export default function App() {
     }
   })
 
+  useEffect(() => {
+    let active = true
+    getAccessSession()
+      .then((nextSession) => {
+        if (!active) return
+        setSession(nextSession)
+        setStage(nextSession ? 'intro' : 'gate')
+      })
+      .catch(() => {
+        if (!active) return
+        setStage('gate')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   const startFresh = () => {
+    if (!session || session.remainingCompletions <= 0) return
     localStorage.removeItem(STORAGE.progress)
     localStorage.removeItem(STORAGE.result)
+    localStorage.removeItem(STORAGE.pendingCompletion)
     setSavedAnswers([])
     setResult(null)
     setStage('quiz')
     window.scrollTo(0, 0)
   }
 
-  const finish = (answers: ResponseStyle[]) => {
+  const finish = async (answers: ResponseStyle[]) => {
     const nextResult = calculateResult(answers)
+    const completionKey =
+      localStorage.getItem(STORAGE.pendingCompletion) || createCompletionKey()
+    localStorage.setItem(STORAGE.pendingCompletion, completionKey)
+    const nextSession = await recordQuizCompletion(completionKey, nextResult.persona.id)
+    setSession(nextSession)
     localStorage.setItem(STORAGE.result, JSON.stringify(answers))
+    localStorage.removeItem(STORAGE.pendingCompletion)
     setResult(nextResult)
     setStage('result')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  if (stage === 'checking') {
+    return <LoadingScreen />
+  }
   if (stage === 'gate') {
-    return <AccessGate onUnlock={() => setStage('intro')} />
+    return (
+      <AccessGate
+        onUnlock={(nextSession) => {
+          setSession(nextSession)
+          setStage('intro')
+        }}
+      />
+    )
   }
   if (stage === 'intro') {
-    if (result) {
-      return <ResultPage result={result} onRestart={startFresh} />
+    if (result && session) {
+      return (
+        <ResultPage
+          result={result}
+          onRestart={startFresh}
+          canRestart={session.remainingCompletions > 0}
+        />
+      )
     }
+    if (!session) return <AccessGate onUnlock={setSession} />
     return (
       <Intro
         onStart={startFresh}
         onResume={savedAnswers.length ? () => setStage('quiz') : null}
+        session={session}
       />
     )
   }
   if (stage === 'quiz') {
     return <Quiz initialAnswers={savedAnswers} onFinish={finish} />
   }
-  return result ? <ResultPage result={result} onRestart={startFresh} /> : null
+  return result && session ? (
+    <ResultPage
+      result={result}
+      onRestart={startFresh}
+      canRestart={session.remainingCompletions > 0}
+    />
+  ) : null
+}
+
+export default function App() {
+  return window.location.pathname.startsWith('/admin') ? <AdminPanel /> : <QuizApp />
 }
