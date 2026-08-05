@@ -1,0 +1,41 @@
+{
+  "name": "shiguang-persona-quiz",
+  "version": "1.0.0",
+  "description": "原创历史人物人格测试原型",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yangkai1998/yangkai.git"
+  },
+  "keywords": [
+    "quiz",
+    "personality",
+    "react"
+  ],
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/yangkai1998/yangkai/issues"
+  },
+  "homepage": "https://github.com/yangkai1998/yangkai#readme",
+  "dependencies": {
+    "html2canvas": "^1.4.1",
+    "lucide-react": "^1.28.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}
