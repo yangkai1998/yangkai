@@ -120,3 +120,19 @@ npm run dev:edge
 - 有效期：修改统一截止时间会即时限制已有会话；修改“绑定后有效天数”只影响后续新绑定。
 
 降低完成次数时，不应设为低于用户已经完成的次数。涉及已售订单的规则调整，应遵守商品页面对用户的原始承诺。
+
+## 9. Supabase 免费项目休眠（常见）
+
+免费项目大约 7 天无活动会自动 Pause。此时：
+
+- `https://你的网址/api/health` 会返回 `configured:true, database:false`；
+- 管理台登录会提示数据库不可用（不是管理密钥错了）。
+
+处理步骤：
+
+1. 打开 [Supabase Dashboard](https://supabase.com/dashboard)；
+2. 进入本项目对应的 Project；
+3. 若显示 **Paused**，点击 **Restore**，等待变为 Active（约 1–2 分钟）；
+4. 再访问 `/api/health`，确认 `database:true` 后重新进入管理台。
+
+仓库已包含 GitHub Action `.github/workflows/keepalive-supabase.yml`：合并到默认分支后，每 12 小时自动访问健康检查，降低再次休眠概率。也可在 Actions 里手动 Run workflow。

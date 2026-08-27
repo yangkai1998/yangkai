@@ -27,6 +27,14 @@ interface CodeRecord {
 
 const TOKEN_KEY = 'shiguang-admin-token'
 
+function formatAdminError(status: number, code?: string) {
+  if (status === 401) return '管理密钥不正确'
+  if (status === 503 || code === 'service_unavailable') {
+    return '数据库暂时不可用（多半是 Supabase 免费项目休眠了）。请到 Supabase 控制台点 Restore，恢复后再试。'
+  }
+  return code || '请求失败'
+}
+
 async function adminRequest<T>(token: string, path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
@@ -38,7 +46,7 @@ async function adminRequest<T>(token: string, path: string, init?: RequestInit):
   })
   const payload = (await response.json()) as T & { error?: string }
   if (!response.ok) {
-    throw new Error(response.status === 401 ? '管理密钥不正确' : payload.error || '请求失败')
+    throw new Error(formatAdminError(response.status, payload.error))
   }
   return payload
 }

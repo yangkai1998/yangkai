@@ -117,8 +117,16 @@ export async function supabaseRequest<T>(
     },
   })
 
+  let payload: unknown = null
   const text = await response.text()
-  const payload = text ? JSON.parse(text) : null
+  if (text) {
+    try {
+      payload = JSON.parse(text)
+    } catch {
+      console.error('Supabase returned non-JSON', response.status, text.slice(0, 200))
+      throw new Error('database_request_failed')
+    }
+  }
   if (!response.ok) {
     console.error('Supabase request failed', response.status, payload)
     throw new Error('database_request_failed')
