@@ -1,0 +1,32 @@
+name: Keepalive Supabase
+
+# Free Supabase projects pause after ~7 days of inactivity.
+# Hitting /api/health runs a real DB read and keeps the project awake.
+# Scheduled workflows only run on the repository default branch after merge.
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping production health endpoint
+        run: |
+          set -euo pipefail
+          url="https://shiguang-persona.pages.dev/api/health"
+          for attempt in 1 2 3 4 5; do
+            echo "Attempt ${attempt}..."
+            body="$(curl -sS "$url" || true)"
+            echo "$body"
+            if echo "$body" | grep -q '"database":true'; then
+              echo "Database reachable."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Database still unreachable after retries."
+          exit 1
